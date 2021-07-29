@@ -1,12 +1,12 @@
 #using Pkg
 # Pkg.add("DifferentialEquations"); Pkg.add("ControlSystems"); kg.add("Plots")
 # import Pkg; Pkg.add("ControlToolbox") 
-using ControlSystems 
-using LinearAlgebra, PyPlot   
+using ControlSystems, LinearAlgebra, PyPlot, StatsPlots
+using Distributed, StatsBase, Distributions 
 ##### START building the controller
 
 ## % Parameter θ
-θ=[1 1 1 0 1 0.001]      ## nominal θ
+θ=[1, 1, 1, 0, 1,0.001]      ## nominal θ
 names=["m1" "m2" "kl" "kn" "λ" "τ" ]     ## names of parameters
 # admissible ranges
 θlims=[0.1    2;        0.1    2;
@@ -14,15 +14,15 @@ names=["m1" "m2" "kl" "kn" "λ" "τ" ]     ## names of parameters
        0.2    1.8;      0.0001 0.3];             
        
 # nominal design      
-dnom=[-0.1324 0.3533 0.6005 0.0728 0.5503 1.4175 2.6531 2.4802 1];  
+dnom=[-0.1324, 0.3533, 0.6005, 0.0728, 0.5503, 1.4175, 2.6531, 2.4802, 1];  
 
 ###
-function  build_plant(θ::AbstractVector{<:Real})
+function  build_plant(θ::Array{Float64,2})
     p=θ
     # linearization about zero (not about stable oscillator). 
     # Nonlinear spring does not show up
         if length(θ)==2 
-            p_out=[p[1] 1 p[2] 0 1 0.001];
+            p_out=[p[1], 1, p[2], 0, 1, 0.001];
         else  
             p_out=p;
            #  p_out[1]=p[1];    # m1  
@@ -128,15 +128,17 @@ function g_controller(design,θ,do_linear::Bool=true)
     
     if do_linear 
         y , t =impulse(clsys,0:0.001:25);
-        u, t  = lsim(clsys,y,t);    
+        u, t  = lsim(ss(Ac, Bc, Cc', Dc),y,t);    
     else
         # to do: implement non linear solver 
         y , t =impulse(clsys,0:0.001:25);
         u, t  = lsim(clsys,y,t);    
     end
     pos_t= findfirst(t .>15)
-    maxy=0.1;     g2=max(abs(y[pos_t]))-maxy;
-    maxu=0.5;     g3=findmax(abs.(u))[1]-maxu;
+    maxy=0.1;     
+    g2=max(abs(y[pos_t]))-maxy;   # control effort 
+    maxu=0.5;    
+    g3=findmax(abs.(u))[1]-maxu;  # settling time 
 
     return g1, g2, g3
 end
@@ -150,16 +152,29 @@ function MonteCarloController(
     θref::AbstractVector{<:Real},
     Nsamples::Integer=100)
 
-    Gsave1=[];     Gsave2=[];    Gsave3=[];
+    G=zeros(Nsamples,3)
     for i =1:Nsamples 
         do_linear=true
-        g1, g2, g3 = g_controller(dnom,abs.(θref.+randn(1,6)/1000),do_linear) 
-        append!(Gsave1,g1 )  
-        push!(Gsave2,g2 )  
-        push!(Gsave3,g3 )
+        g1, g2, g3 = g_controller(dnom,abs.(θref.+randn(1,6)/10),do_linear) 
+        G[i,:]= [g1 g2 g3];
+
+        if isinteger(i/100)
+            println("Number of iterations completed $i/$Nsamples")
+        end
     end     
-    return Gsave
+    return G
 end
 
-Nsamples = 100;
+Nsamples = 10^3;
 Gsave  =  MonteCarloController(dnom,θ,Nsamples)
+
+## Reliability estimate
+
+function EstimateReliabilityScores(
+    G::AbstractVector{<:Real})
+
+    Pf = mean(Gsave.>0,dims=1)
+
+   
+    return Pf
+end
