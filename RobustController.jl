@@ -1,12 +1,12 @@
 #using Pkg
 # Pkg.add("DifferentialEquations"); Pkg.add("ControlSystems"); kg.add("Plots")
 # import Pkg; Pkg.add("ControlToolbox") 
-using ControlSystems, LinearAlgebra, PyPlot, StatsPlots
+using ControlSystems, LinearAlgebra, StatsPlots
 using Distributed, StatsBase, Distributions 
 ##### START building the controller
 
 ## % Parameter θ
-θ=[1, 1, 1, 0, 1,0.001]      ## nominal θ
+θref=[1, 1, 1, 0, 1,0.001]      ## nominal θ
 names=["m1" "m2" "kl" "kn" "λ" "τ" ]     ## names of parameters
 # admissible ranges
 θlims=[0.1    2;        0.1    2;
@@ -17,7 +17,7 @@ names=["m1" "m2" "kl" "kn" "λ" "τ" ]     ## names of parameters
 dnom=[-0.1324, 0.3533, 0.6005, 0.0728, 0.5503, 1.4175, 2.6531, 2.4802, 1];  
 
 ###
-function  build_plant(θ::Array{Float64,2})
+function  build_plant(θ::AbstractVector{<:Real})
     p=θ
     # linearization about zero (not about stable oscillator). 
     # Nonlinear spring does not show up
@@ -49,7 +49,7 @@ function  build_plant(θ::Array{Float64,2})
     return A, B, C, D, x0, p_out
 end
  
-A, B, C, D = build_plant(θ) 
+A, B, C, D = build_plant(θref) 
 ### define converter from trasfer function to system
 
  
@@ -143,18 +143,17 @@ function g_controller(design,θ,do_linear::Bool=true)
     return g1, g2, g3
 end 
 
-gnominal=g_controller(dnom,θ,true)
+gnominal=g_controller(dnom,θref,true)
 
 ## Generate random samples within the limits of θ 
 function MonteCarloController(
     dnom::AbstractVector{<:Real},
-    θref::AbstractVector{<:Real},
-    Nsamples::Integer=100)
-
-    G=zeros(Nsamples,3)
+    θ::Array) 
+    Nsamples=size(θ,1)
+    G=zeros(Nsamples,3);
     for i =1:Nsamples 
         do_linear=true
-        g1, g2, g3 = g_controller(dnom,abs.(θref.+randn(1,6)/10),do_linear) 
+        g1, g2, g3 = g_controller(dnom,θ[i,:],do_linear) 
         G[i,:]= [g1 g2 g3];
 
         if isinteger(i/100)
@@ -163,16 +162,15 @@ function MonteCarloController(
     end     
     return G
 end
-
-Nsamples = 10^3;
-Gsave  =  MonteCarloController(dnom,θ,Nsamples)
-
-## Reliability estimate
+ 
+Gref  =  MonteCarloController(dnom,Array(θref'))
 
 function EstimateReliabilityScores(
-    G::AbstractVector{<:Real}) 
+    G::Array) 
     Pf = mean(G.>0,dims=1);   
-    for i=1:size(G,2)
+    Ng=size(G,2);
+    Severity=zeros(1,Ng);
+    for i=1:Ng
        Idxs = findall(G[:,i].>=0);
        if isempty(Idxs)
         Severity[i] = 0;
@@ -183,4 +181,20 @@ function EstimateReliabilityScores(
     return Pf, Severity
 end
 
-Pf, Severity = EstimateReliabilityScores(Gsave)
+Pf, Severity = EstimateReliabilityScores(Gref)
+
+## load samples
+using CSV, DataFrames
+
+File_path=string(pwd(), "\\Theta_small.csv");
+df = CSV.read(File_path,DataFrame);
+Theta_samples=Matrix(df)
+
+G_samples  =  MonteCarloController(dnom,Theta_samples)
+
+corrplot(G_samples,labels=["g$i" for i=1:3])
+
+
+## Reliability estimate
+
+
