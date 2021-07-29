@@ -1,7 +1,6 @@
+using LinearAlgebra
 
-
-  
-function tf2ss(Num::Array,Den::Array)
+function tf2ss(Num::AbstractVector{<:Real},Den::AbstractVector{<:Real})
     # TF2SS  Transfer function to state-space conversion.
     #   calculates the state-space representation: 
     #       x = Ax + Bu
@@ -39,4 +38,3 @@ function tf2ss(Num::Array,Den::Array)
     end 
     return a,b,c,d
 end
- 
