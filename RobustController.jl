@@ -141,12 +141,11 @@ function g_controller(design,θ,do_linear::Bool=true)
     g3=findmax(abs.(u))[1]-maxu;  # settling time 
 
     return g1, g2, g3
-end
-
+end 
 
 gnominal=g_controller(dnom,θ,true)
-## Generate random samples within the limits of θ
 
+## Generate random samples within the limits of θ 
 function MonteCarloController(
     dnom::AbstractVector{<:Real},
     θref::AbstractVector{<:Real},
@@ -171,10 +170,18 @@ Gsave  =  MonteCarloController(dnom,θ,Nsamples)
 ## Reliability estimate
 
 function EstimateReliabilityScores(
-    G::AbstractVector{<:Real})
-
-    Pf = mean(Gsave.>0,dims=1)
-
-   
-    return Pf
+    G::AbstractVector{<:Real}) 
+    Pf = mean(Gsave.>0,dims=1)  
+    Severity=zeros(size(Gsave,2));
+    for j=1:size(Gsave,2)
+       Idxs = findall(Gsave[:,j].>=0);
+       if isempty(Idxs)
+        Severity[j,1] = 0;
+       else
+        Severity[j,1] = mean(Gsave[Idxs,j]);
+       end
+    end 
+    return Pf, Severity
 end
+
+Pf, Severity = EstimateReliabilityScores(Gsave)
