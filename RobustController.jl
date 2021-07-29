@@ -171,14 +171,13 @@ Gsave  =  MonteCarloController(dnom,θ,Nsamples)
 
 function EstimateReliabilityScores(
     G::AbstractVector{<:Real}) 
-    Pf = mean(Gsave.>0,dims=1)  
-    Severity=zeros(size(Gsave,2));
-    for j=1:size(Gsave,2)
-       Idxs = findall(Gsave[:,j].>=0);
+    Pf = mean(G.>0,dims=1);   
+    for i=1:size(G,2)
+       Idxs = findall(G[:,i].>=0);
        if isempty(Idxs)
-        Severity[j,1] = 0;
+        Severity[i] = 0;
        else
-        Severity[j,1] = mean(Gsave[Idxs,j]);
+        Severity[i] = mean(G[Idxs,i]);
        end
     end 
     return Pf, Severity
