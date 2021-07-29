@@ -17,7 +17,7 @@ names=["m1" "m2" "kl" "kn" "λ" "τ" ]     ## names of parameters
 dnom=[-0.1324 0.3533 0.6005 0.0728 0.5503 1.4175 2.6531 2.4802 1];  
 
 ###
-function  build_plant(θ::Array)
+function  build_plant(θ::AbstractVector{<:Real})
     p=θ
     # linearization about zero (not about stable oscillator). 
     # Nonlinear spring does not show up
@@ -49,15 +49,12 @@ function  build_plant(θ::Array)
     return A, B, C, D, x0, p_out
 end
  
-Pant=build_plant(θ)
-A=Pant[1];B=Pant[2];
-C=Pant[3];D=Pant[4]; 
+A, B, C, D = build_plant(θ) 
 ### define converter from trasfer function to system
 
  
-
-## A, B, C, D = tf2ss(Num::Array,Den::Array) 
-function tf2ss(Num::Array,Den::Array)
+ 
+function tf2ss(Num::AbstractVector{<:Real},Den::AbstractVector{<:Real})
     # TF2SS  Transfer function to state-space conversion.
     #   calculates the state-space representation: 
     #       x = Ax + Bu
@@ -96,13 +93,10 @@ function tf2ss(Num::Array,Den::Array)
     return a,b,c,d
 end
  
-Cont=tf2ss(dnom[1:4],dnom[5:end])
-Ac=Cont[1];    Bc=Cont[2];
-Cc=Cont[3];    Dc=Cont[4]; 
-
+Ac, Bc, Cc, Dc=tf2ss(dnom[1:4],dnom[5:end])  
  ##  define controller reliability function 
 
-function g_controller(design,θ,do_linear)
+function g_controller(design,θ,do_linear::Bool=true)
 
     # INPUTS 
     # design - the controller gains design = [coeffs numerator ceffs denominator]
@@ -147,15 +141,25 @@ function g_controller(design,θ,do_linear)
     return g1, g2, g3
 end
 
+
+gnominal=g_controller(dnom,θ,true)
 ## Generate random samples within the limits of θ
 
-function MonteCarlo(design,θlims,Nsamples)
+function MonteCarloController(
+    dnom::AbstractVector{<:Real},
+    θref::AbstractVector{<:Real},
+    Nsamples::Integer=100)
+
+    Gsave1=[];     Gsave2=[];    Gsave3=[];
     for i =1:Nsamples 
         do_linear=true
-        g1, g2, g3 = g_controller(design,θlims[:,1]+rand(6,1).*(θlims[:,1]-θlims[:,2]),do_linear) 
-        Gsave[i]= [ g1, g2, g3];  
+        g1, g2, g3 = g_controller(dnom,abs.(θref.+randn(1,6)/1000),do_linear) 
+        append!(Gsave1,g1 )  
+        push!(Gsave2,g2 )  
+        push!(Gsave3,g3 )
     end     
     return Gsave
 end
 
-Gsave=MonteCarlo(dnom,θlims,10)
+Nsamples = 100;
+Gsave  =  MonteCarloController(dnom,θ,Nsamples)
