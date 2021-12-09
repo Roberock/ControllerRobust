@@ -33,7 +33,7 @@ include(string(pwd(), "\\data\\MyDGM.jl"));## my Data-Generating-MechanismDGM
 
 # nominal design      
 dnom=[-0.1324, 0.3533, 0.6005, 0.0728, 0.5503, 1.4175, 2.6531, 2.4802, 1];
-d_names =["a1" "a2" "a3" "a4" "a5" "b1" "b2" "b3" "b4"]     ## names of design parameters 
+d_names =["b3" "b2" "b1" "b0" "a3" "a2" "a1" "a0"]     ## names of design parameters 
 
 ### Example: build the system matrices (state-space representation)
 A, B, C, D = build_plant(δref); 
