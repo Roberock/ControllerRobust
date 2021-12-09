@@ -10,7 +10,7 @@ function EstimateReliabilityScores(G::Array)
     Pf_all = mean(W.>=0);          # for the  combined  requirements
    
     for i=1:Ng
-       Idxs = findall(G[:,i].>=0);
+       Idxs = findall(G[:,i].>0);
        if isempty(Idxs)
         Sev_ind[i] = 0; 
        else
