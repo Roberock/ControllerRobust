@@ -1,8 +1,17 @@
-#using Pkg
-# Pkg.add("DifferentialEquations"); Pkg.add("ControlSystems"); kg.add("Plots")
-# import Pkg; Pkg.add("ControlToolbox") 
+using Pkg
+import Pkg;  
+Pkg.add("StatsPlots")
+Pkg.add("ControlSystems"); 
+Pkg.add("Distributed");
+Pkg.add("StatsBase");
+Pkg.add("Distributions");
+Pkg.add("CSV")
+# Pkg.add("ControlToolbox")
+
+ 
 using ControlSystems, StatsPlots
 using Distributed, StatsBase, Distributions 
+using CSV, DataFrames
 
 include(string(pwd(), "\\src\\build_plant.jl"));
 include(string(pwd(), "\\src\\g_controller.jl"));
@@ -14,34 +23,34 @@ include(string(pwd(), "\\data\\MyDGM.jl"));## my Data-Generating-MechanismDGM
 ####################  Define contorl problem and run example ######################## 
 #####################################################################################
 
-## Parameter θ (uncertain parameters)
-θref=[1, 1, 1, 0, 1,0.001]      ## nominal θ
-θnames=["mass1" "mass2" "kl" "kn" "λ" "τ" ]     ## names of the uncertain factors
+## Parameter δ (uncertain parameters)
+δref=[1, 1, 1, 0, 1,0.001]      ## example: a reference value for the uncertain parameters δ
+δnames=["mass1" "mass2" "kl" "kn" "λ" "τ" ]     ## names of the uncertain factors
 # admissible ranges
-θlims=[0.1    2;        0.1    2;
+δlims=[0.1    2;        0.1    2;
        0.05   1.75;     -1     1;
        0.2    1.8;      0.0001 0.3];             
 
 # nominal design      
 dnom=[-0.1324, 0.3533, 0.6005, 0.0728, 0.5503, 1.4175, 2.6531, 2.4802, 1];
-d_names =["m1" "m2" "kl" "kn" "λ" "τ" ]     ## names of design parameters 
+d_names =["a1" "a2" "a3" "a4" "a5" "b1" "b2" "b3" "b4"]     ## names of design parameters 
 
 ### Example: build the system matrices (state-space representation)
-A, B, C, D = build_plant(θref); 
+A, B, C, D = build_plant(δref); 
 
 ### Example: define the controller convering from trasfer function to system state matrices  
 Ac, Bc, Cc, Dc=tf2ss(dnom[1:4],dnom[5:end]);  
 
 ### Example: call solver and compute reliability function and system response 
 tvec=0:0.01:25;
-g1_nom,g2_nom,g3_nom, y_nominal =g_controller(dnom,θref,tvec,true);
+g1_nom,g2_nom,g3_nom, y_nominal =g_controller(dnom,δref,tvec,true);
  
-## Example: Monte Carlo simulation  (for random samples within θlims)
+## Example: Monte Carlo simulation  (for random samples within δlims)
 Ns=1500
-θuniform =  θlims[:,1] .+ (θlims[:,2]- θlims[:,1]).*rand(6,Ns);
-# θgaussian=  MyDGM(θref, θlims, Ns) 
+δuniform =  δlims[:,1] .+ (δlims[:,2]- δlims[:,1]).*rand(6,Ns);
+# δgaussian=  MyDGM(δref, δlims, Ns) 
 
-Gref ,Yref =  MonteCarloController(dnom,Array(θuniform'),tvec)
+Gref ,Yref =  MonteCarloController(dnom,Array(δuniform'),tvec)
 
  ## Exanoke plot system response   
 plot(tvec,  Yref' , alpha=0.5 ,legend = false, xlabel="time", ylabel="x2(t)") 
@@ -66,7 +75,7 @@ Pf_ind, Pf_all, Sev_ind, Sev_all, W, IsF_all, IsF_ind= EstimateReliabilityScores
 # 𝑏1  0.5886   0.5265    0.7752  0.6005
 # 𝑏0  0.0777   0.0716    0.0981  0.0728
  
-Design_Selection=3
+Design_Selection=1
 if Design_Selection==1 # same as the nominal
     d_new=[-0.1324, 0.3533, 0.6005, 0.0728, 0.5503, 1.4175, 2.6531, 2.4802, 1];  
 elseif Design_Selection==2 # desing from min{ \hat{F}_w^{-1}(1) }
@@ -78,24 +87,24 @@ elseif Design_Selection==4 # from  min { Pf }
 end
  
 ## load data (samples of the uncertain factors)
-using CSV, DataFrames
+
 DataSetType =1
 Nuber_of_samples=10^3
 if DataSetType==1
     File_path=string(pwd(), "\\data\\Theta_small.csv"); ## small uncertainty
     df = CSV.read(File_path,DataFrame);
-    Theta_samples=Matrix(df);
+    δ_samples=Matrix(df);
 elseif DataSetType==2
     File_path=string(pwd(), "\\data\\Theta_large.csv"); ## large uncertainty
     df = CSV.read(File_path,DataFrame);
-    Theta_samples=Matrix(df);
-elseif DataSetType==3 
-    Theta_samples=MyDGM(Nuber_of_samples);
+    δ_samples=Matrix(df);
+#elseif DataSetType==3 
+#    δ_samples=MyDGM(Nuber_of_samples); % your own data generating mechanism
 end
 
  
 ## Monte Carlo simulation for d_new, failure probability, and severity  
-G, Y_samples  =  MonteCarloController(d_new,Theta_samples,tvec)
+G, Y_samples  =  MonteCarloController(d_new,δ_samples,tvec)
 
 Pf_ind, Pf_all, Sev_ind, Sev_all, W, IsFail_all, IsF_ind= EstimateReliabilityScores(G);  
 
