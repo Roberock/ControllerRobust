@@ -24,3 +24,7 @@ https://doi.org/10.1115/DSCC2019-8949
 # 𝑏1  0.5886   0.5265    0.7752  0.6005
 # 𝑏0  0.0777   0.0716    0.0981  0.0728
  ```
+
+
+
+https://github.com/Roberock/ControllerRobust/blob/master/References%20and%20presentation/Challenge%20RBDO%20controller.pdf
