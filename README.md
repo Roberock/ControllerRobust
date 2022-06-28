@@ -2,7 +2,7 @@
 
 
 Paper with problem description:
-* [] R.Rocchetta, L.G.Crespo, S.P.Kenny, Solution of the benchmark control problem by scenario
+* [1] R.Rocchetta, L.G.Crespo, S.P.Kenny, Solution of the benchmark control problem by scenario
 optimization, Dynamic systems and control conference DSCC, 2019.
 https://doi.org/10.1115/DSCC2019-8949
 
@@ -10,7 +10,7 @@ https://doi.org/10.1115/DSCC2019-8949
 
 ```
 ######################################################################
-####################  Analyze one of 4 designs ####################### 
+######  [1] proposed and analyzed4 designs ###########################
 ######################################################################
 # Candidate controller design    
 #   𝒮𝒫1(𝒟,0) 𝒮𝒫1(𝒟,.05) 𝒮𝒫2(𝒟) Nominal
