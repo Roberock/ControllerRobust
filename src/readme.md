@@ -18,7 +18,7 @@ function g_controller(design::AbstractVector{<:Real},
     # g[2] : control effort 
     # g[3] : settling time 
 
-    Ap, Bp, Cp, Dp = build_plant(θ); # multi state matrices 
+    Ap, Bp, Cp, Dp = build_plant(θ); # state matrices 
     Bp1=Bp[:,1];
     Bp2=Bp[:,2]; 
     # define transfer function for the controller
