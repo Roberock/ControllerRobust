@@ -26,5 +26,5 @@ https://doi.org/10.1115/DSCC2019-8949
  ```
 
 
-## refer to challenge problem presentation for more details
+## See presentation of the challenge problem for more details:
 https://github.com/Roberock/ControllerRobust/blob/master/References%20and%20presentation/Challenge%20RBDO%20controller.pdf
