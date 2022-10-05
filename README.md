@@ -7,7 +7,8 @@ DOI https://doi.org/10.1115/DSCC2019-8949
 
 ``` bibtex
 @proceedings{10.1115/DSCC2019-8949, 
-author = {Rocchetta, Roberto and Crespo, Luis G. and Kenny, Sean P.}, title = "{Solution of the Benchmark Control Problem by Scenario Optimization}", 
+author = {Rocchetta, Roberto and Crespo, Luis G. and Kenny, Sean P.}, 
+title = "{Solution of the Benchmark Control Problem by Scenario Optimization}", 
 volume = {Volume 2},
 series = {Dynamic Systems and Control Conference}, year = {2019}, month = {10}, 
 doi = {10.1115/DSCC2019-8949}, url = {https://doi.org/10.1115/DSCC2019-8949}}
