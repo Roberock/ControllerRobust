@@ -31,5 +31,7 @@ doi = {10.1115/DSCC2019-8949}, url = {https://doi.org/10.1115/DSCC2019-8949}}
  ```
 
 
-## See presentation of the challenge problem for more details:
+## See presentation of the challenge (presented at the Julia Reach Workshop 2022) problem for more details:
 https://github.com/Roberock/ControllerRobust/blob/master/References%20and%20presentation/Challenge%20RBDO%20controller.pdf
+
+[![IMAGE ALT TEXT HERE](./Link_to_youtube_presentation.png)](https://www.youtube.com/https://www.youtube.com/watch?v=_wyqEt6J3Zw&ab_channel=JuliaReach)
